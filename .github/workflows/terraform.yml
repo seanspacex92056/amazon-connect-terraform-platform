@@ -1,0 +1,33 @@
+name: terraform
+
+on:
+  pull_request:
+    paths:
+      - '**/*.tf'
+      - 'contact-flows/**'
+      - '.github/workflows/terraform.yml'
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, prod]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+      - name: Terraform fmt
+        run: terraform fmt -recursive -check
+      - name: Terraform init
+        working-directory: envs/${{ matrix.environment }}
+        run: terraform init -backend=false
+      - name: Terraform validate
+        working-directory: envs/${{ matrix.environment }}
+        run: terraform validate

@@ -1,0 +1,17 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "entry",
+  "Metadata": {"entryPointPosition": {"x": 20, "y": 20}, "ActionMetadata": {}},
+  "Actions": [
+    {"Identifier":"entry","Type":"UpdateFlowLoggingBehavior","Parameters":{"FlowLoggingBehavior":"Enabled"},"Transitions":{"NextAction":"recording","Errors":[]}},
+    {"Identifier":"recording","Type":"UpdateContactRecordingBehavior","Parameters":{"RecordingBehaviorOption":"Enable","RecordingParticipantOption":"All"},"Transitions":{"NextAction":"welcome","Errors":[]}},
+    {"Identifier":"welcome","Type":"MessageParticipant","Parameters":{"Text":"Thank you for calling Enterprise Support."},"Transitions":{"NextAction":"lookup","Errors":[]}},
+    {"Identifier":"lookup","Type":"InvokeLambdaFunction","Parameters":{"LambdaFunctionARN":"${customer_lookup_lambda_arn}","InvocationTimeLimitSeconds":"5"},"Transitions":{"NextAction":"menu","Errors":[{"NextAction":"menu","ErrorType":"NoMatchingError"}]}},
+    {"Identifier":"menu","Type":"GetParticipantInput","Parameters":{"Text":"Press 1 for Enterprise Support, 2 for Cloud Platform Support, or 3 for Priority Escalations.","InputTimeLimitSeconds":"5"},"Transitions":{"Conditions":[{"NextAction":"enterpriseQueue","Condition":{"Operator":"Equals","Operands":["1"]}},{"NextAction":"cloudQueue","Condition":{"Operator":"Equals","Operands":["2"]}},{"NextAction":"priorityQueue","Condition":{"Operator":"Equals","Operands":["3"]}}],"Errors":[{"NextAction":"enterpriseQueue","ErrorType":"NoMatchingCondition"}]}},
+    {"Identifier":"enterpriseQueue","Type":"UpdateContactTargetQueue","Parameters":{"QueueId":"${enterprise_queue_id}"},"Transitions":{"NextAction":"transfer","Errors":[]}},
+    {"Identifier":"cloudQueue","Type":"UpdateContactTargetQueue","Parameters":{"QueueId":"${cloud_queue_id}"},"Transitions":{"NextAction":"transfer","Errors":[]}},
+    {"Identifier":"priorityQueue","Type":"UpdateContactTargetQueue","Parameters":{"QueueId":"${priority_queue_id}"},"Transitions":{"NextAction":"transfer","Errors":[]}},
+    {"Identifier":"transfer","Type":"TransferContactToQueue","Parameters":{},"Transitions":{"NextAction":"disconnect","Errors":[{"NextAction":"disconnect","ErrorType":"NoMatchingError"}]}},
+    {"Identifier":"disconnect","Type":"DisconnectParticipant","Parameters":{},"Transitions":{}}
+  ]
+}
